@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kordku – Catat Lirik & Chord</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #c8f04a;
+    --accent2: #7b61ff;
+    --text: #f0f0f0;
+    --muted: #7a7a8c;
+    --chord-color: #c8f04a;
+    --danger: #ff5c5c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--muted); }
+  .header-actions { display: flex; gap: 8px; }
+
+  /* LAYOUT */
+  .app {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 57px);
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .song-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .song-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .song-item:hover { background: var(--surface2); }
+  .song-item.active { background: var(--surface2); border-left: 2px solid var(--accent); }
+  .song-item-info { flex: 1; min-width: 0; }
+  .song-item-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .song-item-artist {
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .song-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .song-item:hover .song-delete { opacity: 1; }
+  .song-delete:hover { color: var(--danger); }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .song-meta {
+    padding: 20px 28px 0;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .meta-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    padding: 6px 0;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .meta-input:focus { border-color: var(--accent); }
+  #songTitle {
+    font-size: 1.4rem;
+    font-weight: 700;
+    flex: 1;
+    min-width: 200px;
+  }
+  #songArtist {
+    font-size: 0.9rem;
+    color: var(--muted);
+    width: 160px;
+  }
+  #songArtist::placeholder { color: var(--muted); }
+  #songTitle::placeholder { color: var(--border); }
+
+  /* TOOLBAR */
+  .toolbar {
+    padding: 12px 28px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .toolbar-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+  .btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e10;
+    font-weight: 700;
+  }
+  .btn-accent:hover { background: #b8e03a; border-color: #b8e03a; color: #0e0e10; }
+  .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+  .transpose-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+  .transpose-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: center;
+  }
+  .transpose-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0 2px;
+    transition: color 0.15s;
+  }
+  .transpose-btn:hover { color: var(--accent); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* EDITOR */
+  .editor-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+
+  /* EDIT MODE */
+  .edit-mode { display: flex; flex-direction: column; gap: 0; }
+  .line-editor {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .line-editor:hover { border-bottom-color: var(--border); }
+  .line-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--border);
+    width: 24px;
+    text-align: right;
+    padding-top: 10px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .line-fields { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .chord-input {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--chord-color);
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+    letter-spacing: 1px;
+  }
+  .chord-input:focus { border-bottom-color: var(--accent2); }
+  .lyric-input {
+    font-size: 0.95rem;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+    font-family: 'Space Grotesk', sans-serif;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.15s;
+  }
+  .lyric-input:focus { border-bottom-color: var(--border); }
+  .line-editor .del-line {
+    background: none;
+    border: none;
+    color: var(--border);
+    cursor: pointer;
+    padding: 8px 4px;
+    font-size: 0.8rem;
+    transition: color 0.15s;
+    opacity: 0;
+  }
+  .line-editor:hover .del-line { opacity: 1; }
+  .del-line:hover { color: var(--danger) !important; }
+
+  /* PREVIEW MODE */
+  .preview-mode { font-family: 'Space Mono', monospace; }
+  .preview-line { margin-bottom: 2px; display: flex; flex-direction: column; }
+  .preview-chords {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--chord-color);
+    letter-spacing: 2px;
+    min-height: 1.4em;
+    white-space: pre;
+  }
+  .preview-lyric {
+    font-size: 1rem;
+    color: var(--text);
+    white-space: pre;
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 1.5em;
+  }
+  .preview-empty { height: 20px; }
+  .preview-section {
+    margin-bottom: 24px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    gap: 16px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 3rem; }
+  .empty-title { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+  .empty-sub { font-size: 0.875rem; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .modal h3 { font-size: 1rem; font-weight: 700; }
+  .modal-field { display: flex; flex-direction: column; gap: 6px; }
+  .modal-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* HELP CHIP */
+  .help-tip {
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 4px 10px;
+    background: var(--surface2);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    .sidebar { width: 200px; min-width: 200px; }
+    .toolbar { padding: 10px 14px; }
+    .editor-wrap { padding: 16px 14px; }
+    .song-meta { padding: 14px 14px 0; }
+    .tabs { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">kord<span>ku</span></div>
+  <div class="header-actions">
+    <button class="btn btn-sm" onclick="exportTxt()">Export .txt</button>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Lagu Gue</span>
+      <button class="btn btn-sm btn-accent" onclick="openNewSongModal()">+ Baru</button>
+    </div>
+    <div class="song-list" id="songList"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainArea">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🎸</div>
+      <div class="empty-title">Belum ada lagu</div>
+      <div class="empty-sub">Bikin lagu baru buat mulai nulis chord & lirik</div>
+      <button class="btn btn-accent" onclick="openNewSongModal()">+ Lagu Baru</button>
+    </div>
+
+    <div id="editorArea" style="display:none; flex:1; flex-direction:column; overflow:hidden; display:none;">
+      <div class="song-meta">
+        <input class="meta-input" id="songTitle" placeholder="Judul lagu..." oninput="saveCurrent()">
+        <input class="meta-input" id="songArtist" placeholder="Artis / penyanyi" oninput="saveCurrent()">
+      </div>
+
+      <div class="toolbar">
+        <span class="toolbar-label">Transpose</span>
+        <div class="transpose-controls">
+          <button class="transpose-btn" onclick="transpose(-1)">−</button>
+          <span class="transpose-key" id="transposeDisplay">C</span>
+          <button class="transpose-btn" onclick="transpose(1)">+</button>
+        </div>
+
+        <div style="flex:1"></div>
+
+        <span class="help-tip">Chord di atas · Lirik di bawah</span>
+        <button class="btn btn-sm btn-accent" onclick="addLine()">+ Baris</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" id="tabEdit" onclick="switchTab('edit')">Edit</div>
+        <div class="tab" id="tabPreview" onclick="switchTab('preview')">Preview</div>
+      </div>
+
+      <div class="editor-wrap" id="editorWrap">
+        <div class="edit-mode" id="editMode"></div>
+        <div class="preview-mode" id="previewMode" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SONG MODAL -->
+<div class="modal-overlay" id="newSongModal" style="display:none">
+  <div class="modal">
+    <h3>🎵 Lagu Baru</h3>
+    <div class="modal-field">
+      <label class="modal-label">Judul Lagu</label>
+      <input class="modal-input" id="newTitle" placeholder="e.g. Separuh Aku" onkeydown="if(event.key==='Enter')createSong()">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Artis (opsional)</label>
+      <input class="modal-input" id="newArtist" placeholder="e.g. Noah" onkeydown="if(event.key==='Enter')createSong()">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Batal</button>
+      <button class="btn btn-accent" onclick="createSong()">Buat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_ALIASES = {'Db':'C#','Eb':'D#','Fb':'E','Gb':'F#','Ab':'G#','Bb':'A#','Cb':'B'};
+
+let songs = JSON.parse(localStorage.getItem('kordku_songs') || '[]');
+let currentId = null;
+let currentTab = 'edit';
+
+// ===== HELPERS =====
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function saveSongs() {
+  localStorage.setItem('kordku_songs', JSON.stringify(songs));
+}
+
+function getSong(id) { return songs.find(s => s.id === id); }
+
+// ===== CHORD TRANSPOSE =====
+function parseChord(chord) {
+  const m = chord.match(/^([A-G][b#]?)(.*)/);
+  if (!m) return null;
+  let root = m[1];
+  const rest = m[2];
+  if (NOTE_ALIASES[root]) root = NOTE_ALIASES[root];
+  const idx = NOTES.indexOf(root);
+  if (idx === -1) return null;
+  return { idx, rest };
+}
+
+function transposeChord(chord, steps) {
+  const parsed = parseChord(chord);
+  if (!parsed) return chord;
+  const newIdx = (parsed.idx + steps + 12) % 12;
+  return NOTES[newIdx] + parsed.rest;
+}
+
+function transposeChordLine(line, steps) {
+  if (!line.trim()) return line;
+  // split by spaces, transpose each token that looks like a chord
+  return line.replace(/([A-G][b#]?(?:maj|min|m|dim|aug|sus|add|[0-9]|\/[A-G][b#]?)*)/g, (match) => {
+    const parsed = parseChord(match);
+    return parsed ? transposeChord(match, steps) : match;
+  });
+}
+
+// ===== RENDER SIDEBAR =====
+function renderSidebar() {
+  const list = document.getElementById('songList');
+  if (songs.length === 0) {
+    list.innerHTML = '<div style="padding:16px;font-size:0.8rem;color:var(--muted);text-align:center">Belum ada lagu</div>';
+    return;
+  }
+  list.innerHTML = songs.map(s => `
+    <div class="song-item ${s.id === currentId ? 'active' : ''}" onclick="openSong('${s.id}')">
+      <div class="song-item-info">
+        <div class="song-item-title">${s.title || 'Tanpa judul'}</div>
+        <div class="song-item-artist">${s.artist || '—'}</div>
+      </div>
+      <button class="song-delete" onclick="deleteSong(event,'${s.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+// ===== OPEN / CREATE SONG =====
+function openSong(id) {
+  currentId = id;
+  const song = getSong(id);
+  document.getElementById('emptyState').style.display = 'none';
+  const ea = document.getElementById('editorArea');
+  ea.style.display = 'flex';
+  ea.style.flexDirection = 'column';
+  ea.style.flex = '1';
+  ea.style.overflow = 'hidden';
+
+  document.getElementById('songTitle').value = song.title || '';
+  document.getElementById('songArtist').value = song.artist || '';
+
+  // transpose display
+  document.getElementById('transposeDisplay').textContent = NOTES[song.transposeBase ?? 0];
+
+  renderLines();
+  renderSidebar();
+  switchTab('edit');
+}
+
+function openNewSongModal() {
+  document.getElementById('newTitle').value = '';
+  document.getElementById('newArtist').value = '';
+  document.getElementById('newSongModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('newTitle').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('newSongModal').style.display = 'none';
+}
+
+function createSong() {
+  const title = document.getElementById('newTitle').value.trim() || 'Lagu Baru';
+  const artist = document.getElementById('newArtist').value.trim();
+  const song = {
+    id: genId(),
+    title, artist,
+    transposeBase: 0,
+    lines: [{ chord: '', lyric: '' }]
+  };
+  songs.unshift(song);
+  saveSongs();
+  closeModal();
+  openSong(song.id);
+}
+
+function deleteSong(e, id) {
+  e.stopPropagation();
+  songs = songs.filter(s => s.id !== id);
+  saveSongs();
+  if (currentId === id) {
+    currentId = null;
+    document.getElementById('editorArea').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
+  }
+  renderSidebar();
+}
+
+// ===== SAVE =====
+function saveCurrent() {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  song.title = document.getElementById('songTitle').value;
+  song.artist = document.getElementById('songArtist').value;
+  saveSongs();
+  renderSidebar();
+}
+
+function saveLines() {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  const chordInputs = document.querySelectorAll('.chord-input');
+  const lyricInputs = document.querySelectorAll('.lyric-input');
+  song.lines = [];
+  chordInputs.forEach((ci, i) => {
+    song.lines.push({ chord: ci.value, lyric: lyricInputs[i]?.value || '' });
+  });
+  saveSongs();
+}
+
+// ===== LINES RENDER =====
+function renderLines() {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  const container = document.getElementById('editMode');
+  container.innerHTML = '';
+  (song.lines || []).forEach((line, i) => {
+    container.appendChild(makeLineEl(line, i));
+  });
+}
+
+function makeLineEl(line, i) {
+  const div = document.createElement('div');
+  div.className = 'line-editor';
+  div.dataset.idx = i;
+  div.innerHTML = `
+    <div class="line-num">${i+1}</div>
+    <div class="line-fields">
+      <input class="chord-input" placeholder="Am   G   F   C" value="${escHtml(line.chord)}" 
+        oninput="saveLines()" onkeydown="handleChordKey(event,${i})">
+      <input class="lyric-input" placeholder="ketik lirik di sini..." value="${escHtml(line.lyric)}"
+        oninput="saveLines()" onkeydown="handleLyricKey(event,${i})">
+    </div>
+    <button class="del-line" onclick="deleteLine(${i})">✕</button>
+  `;
+  return div;
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function handleChordKey(e, i) {
+  if (e.key === 'Enter' || e.key === 'Tab' && !e.shiftKey) {
+    e.preventDefault();
+    // focus lyric on same line
+    const lyricInputs = document.querySelectorAll('.lyric-input');
+    lyricInputs[i]?.focus();
+  }
+}
+
+function handleLyricKey(e, i) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    saveLines();
+    insertLineAfter(i);
+  }
+}
+
+function addLine() {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  song.lines.push({ chord: '', lyric: '' });
+  saveSongs();
+  renderLines();
+  // focus last chord input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.chord-input');
+    inputs[inputs.length - 1]?.focus();
+  }, 50);
+}
+
+function insertLineAfter(i) {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  song.lines.splice(i + 1, 0, { chord: '', lyric: '' });
+  saveSongs();
+  renderLines();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.lyric-input');
+    inputs[i + 1]?.focus();
+  }, 50);
+}
+
+function deleteLine(i) {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  if (song.lines.length <= 1) return;
+  song.lines.splice(i, 1);
+  saveSongs();
+  renderLines();
+}
+
+// ===== TRANSPOSE =====
+function transpose(steps) {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  saveLines();
+  song.transposeBase = ((song.transposeBase ?? 0) + steps + 12) % 12;
+  song.lines = song.lines.map(line => ({
+    chord: transposeChordLine(line.chord, steps),
+    lyric: line.lyric
+  }));
+  saveSongs();
+  document.getElementById('transposeDisplay').textContent = NOTES[song.transposeBase];
+  renderLines();
+  if (currentTab === 'preview') renderPreview();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabEdit').classList.toggle('active', tab === 'edit');
+  document.getElementById('tabPreview').classList.toggle('active', tab === 'preview');
+  document.getElementById('editMode').style.display = tab === 'edit' ? 'flex' : 'none';
+  document.getElementById('previewMode').style.display = tab === 'preview' ? 'block' : 'none';
+  if (tab === 'preview') {
+    saveLines();
+    renderPreview();
+  }
+}
+
+function renderPreview() {
+  if (!currentId) return;
+  const song = getSong(currentId);
+  const container = document.getElementById('previewMode');
+  container.innerHTML = '';
+  const section = document.createElement('div');
+  section.className = 'preview-section';
+  (song.lines || []).forEach(line => {
+    const div = document.createElement('div');
+    if (!line.chord && !line.lyric) {
+      div.className = 'preview-empty';
+    } else {
+      div.className = 'preview-line';
+      if (line.chord) {
+        const c = document.createElement('div');
+        c.className = 'preview-chords';
+        c.textContent = line.chord;
+        div.appendChild(c);
+      }
+      const l = document.createElement('div');
+      l.className = 'preview-lyric';
+      l.textContent = line.lyric || '';
+      div.appendChild(l);
+    }
+    section.appendChild(div);
+  });
+  container.appendChild(section);
+}
+
+// ===== EXPORT =====
+function exportTxt() {
+  if (!currentId) return;
+  saveLines();
+  const song = getSong(currentId);
+  let txt = `${song.title || 'Lagu'}\n`;
+  if (song.artist) txt += `${song.artist}\n`;
+  txt += '\n';
+  (song.lines || []).forEach(line => {
+    if (line.chord) txt += line.chord + '\n';
+    txt += (line.lyric || '') + '\n';
+  });
+  const blob = new Blob([txt], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${song.title || 'lagu'}.txt`;
+  a.click();
+}
+
+// ===== INIT =====
+renderSidebar();
+if (songs.length > 0) openSong(songs[0].id);
+
+// close modal on overlay click
+document.getElementById('newSongModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
